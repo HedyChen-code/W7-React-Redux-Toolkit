@@ -74,10 +74,15 @@ const Checkout = () => {
   }
 
   const deleteCartAll = async () => {
-    const url = `${API_BASE}/api/${API_PATH}/cart`;
-    await axios.delete(url);
-    getCart();
-    alert('清空購物車成功！')
+    try {
+      const url = `${API_BASE}/api/${API_PATH}/carts`;
+      await axios.delete(url);
+      getCart();
+      alert('清空購物車成功！')
+    } catch (error) {
+      alert(error?.response?.data?.message || '清空購物車失敗');
+    }
+    
   }
 
   useEffect(() => {
@@ -168,10 +173,11 @@ const Checkout = () => {
       <div className="text-end mb-2">
         <button 
           type="button" 
-          className="btn btn-outline-danger"
+          className="btn btn-outline-danger disabled-cursor"
           onMouseEnter={ (e) => e.target.style.color = "#f8f9fa" }
           onMouseLeave={ (e) => e.target.style.color = "" }
           onClick={ deleteCartAll }
+          disabled={ !(cart.carts.length > 0)}
         >
           清空購物車
         </button>
@@ -350,8 +356,9 @@ const Checkout = () => {
             <div className="text-center">
               <button 
                 type="submit" 
-                className="btn btn-danger"
+                className="btn btn-danger disabled-cursor"
                 style={{color: "white"}}
+                disabled={ !(cart.carts.length >0) }
               >送出訂單</button>
             </div>
           </form>
