@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
+import useMessage from '../hooks/useMessage';
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
@@ -15,6 +16,8 @@ function ProductModal ( {
   const [ tempProduct, setTempProduct ] = useState(templateProduct);
   // 參考檔案上傳 input，好在需要時能夠清空其值
   const fileInputRef = useRef(null);
+
+  const { showError, showSuccess } = useMessage();
 
   useEffect(() => {
     setTempProduct(templateProduct);
@@ -109,7 +112,7 @@ function ProductModal ( {
         imageUrl:uploadImageUrl
       }))
     } catch (error) {
-      console.log(error?.response?.data?.message);
+      showError(error?.response?.data?.message || "更新圖片失敗");
     }
   }
 
@@ -135,21 +138,23 @@ function ProductModal ( {
     }
 
     try {
-      const response = await axios[method](url, productData);
+      const res = await axios[method](url, productData);
+      // dispatch(createAsyncMessage(res.data));
+      showSuccess(res.data.message);
       getProducts();
       closeModal();
     } catch (error) {
-      alert(error?.response?.data?.message);
+      showError(error?.response?.data?.message);
     }
   }
 
   const deleteProduct = async (id) => {
     try {
-      const response = await axios.delete(`${API_BASE}/api/${API_PATH}/admin/product/${id}`);
+      await axios.delete(`${API_BASE}/api/${API_PATH}/admin/product/${id}`);
       getProducts();
       closeModal();
     } catch (error) {
-      alert(error?.response?.data?.message);
+      showError(error?.response?.data?.message);
     }
   }
 

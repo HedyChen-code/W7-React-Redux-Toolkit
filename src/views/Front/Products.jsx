@@ -1,25 +1,25 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import useMessage from "../../hooks/useMessage";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
 
 const Products = () => {
   const [ products, setProducts ] = useState([]);
-  
-  const getProducts = async () => {
-    try {
-      const url = `${API_BASE}/api/${API_PATH}/products`;
-      const res = await axios.get(url);
-      console.log(res);
-      setProducts(res.data.products);
-    } catch (error) {
-      console.log('取得產品資料失敗：', error);
-    }
-  }
+  const { showError } = useMessage();
 
   useEffect(() => {
+    const getProducts = async () => {
+      try {
+        const url = `${API_BASE}/api/${API_PATH}/products`;
+        const res = await axios.get(url);
+        setProducts(res.data.products);
+      } catch (error) {
+        showError(error?.response?.data?.message || '取得產品資料失敗');
+      }
+    }
     getProducts();
   }, [])
 

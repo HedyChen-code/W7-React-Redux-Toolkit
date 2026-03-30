@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router"
+import useMessage from "../../hooks/useMessage";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
@@ -9,19 +10,18 @@ const SingleProduct = () => {
   const [ tempProduct, setTempProduct ] = useState({});
   const params = useParams();
   const { id } = params;
-  
-
-  const getSingleProduct = async (id) => {
-    try {
-      const url = `${API_BASE}/api/${API_PATH}/product/${id}`;
-      const res = await axios.get(url);
-      setTempProduct(res.data.product);
-    } catch (error) {
-      alert('取得產品資料失敗：', error);
-    }
-  }
+  const { showSuccess, showError } = useMessage();
 
   useEffect(() => {
+    const getSingleProduct = async (id) => {
+      try {
+        const url = `${API_BASE}/api/${API_PATH}/product/${id}`;
+        const res = await axios.get(url);
+        setTempProduct(res.data.product);
+      } catch (error) {
+        showError('取得產品資料失敗：', error);
+      }
+    }
     getSingleProduct(id);
   }, [id]);
 
@@ -32,11 +32,10 @@ const SingleProduct = () => {
     };
     try {
       const url = `${API_BASE}/api/${API_PATH}/cart`;
-      const res = await axios.post(url, { data });
-      console.log(res);
-      alert('加入購物車成功！')
+      await axios.post(url, { data });
+      showSuccess('加入購物車成功！')
     } catch (error) {
-      alert('加入購物車失敗：', error?.response?.data);
+      showError('加入購物車失敗：', error?.response?.data);
     }
   }
 

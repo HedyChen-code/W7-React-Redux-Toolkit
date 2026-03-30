@@ -4,5 +4,5 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/W6-React-ReactHookForm/'
+  base: '/W7-React-Redux-Toolkit/'
 })

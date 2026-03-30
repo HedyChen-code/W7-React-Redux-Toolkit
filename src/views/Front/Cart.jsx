@@ -1,21 +1,23 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { currency } from "../../utils/filter";
+import useMessage from "../../hooks/useMessage";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
 
 const Cart = () => {
   const [ cart, setCart ] = useState({ cart: [] });
+  const { showSuccess, showError } = useMessage();
 
   const getCart = async () => {
     try {
       const url = `${API_BASE}/api/${API_PATH}/cart`;
       const res = await axios.get(url);
-      console.log(res.data.data);
+      showSuccess(res.data.data);
       setCart(res.data.data);
     } catch (error) {
-      alert('取得購物車資料失敗：', error?.response?.data);
+      showError('取得購物車資料失敗：', error?.response?.data);
     }
   }
 
@@ -26,34 +28,44 @@ const Cart = () => {
         product_id: productId,
         qty
       }
-      const res = await axios.put(url, { data });
+      await axios.put(url, { data });
       getCart();
     } catch (error) {
-      alert(error?.response?.data);
+      showError(error?.response?.data);
     }
   }
 
   const deleteCart = async(id) => {
     try {
       const url = `${API_BASE}/api/${API_PATH}/cart/${id}`;
-      const res = await axios.delete(url);
+      await axios.delete(url);
       getCart();
-      alert('刪除這一筆購物車成功！')
+      showSuccess('刪除這一筆購物車成功！')
     } catch (error) {
-      alert(error?.response?.data);
+      showError(error?.response?.data);
     }
   }
 
   const deleteCartAll = async () => {
     const url = `${API_BASE}/api/${API_PATH}/cart`;
-    const res = await axios.delete(url);
+    await axios.delete(url);
     getCart();
-    alert('清空購物車成功！')
+    showSuccess('清空購物車成功！')
   }
 
   useEffect(() => {
+    const getCart = async () => {
+      try {
+        const url = `${API_BASE}/api/${API_PATH}/cart`;
+        const res = await axios.get(url);
+        showSuccess(res.data.data);
+        setCart(res.data.data);
+      } catch (error) {
+        showError('取得購物車資料失敗：', error?.response?.data);
+      }
+    }
     getCart();
-  }, [])
+  }, [getCart])
 
   return (<>
     <div className="container">

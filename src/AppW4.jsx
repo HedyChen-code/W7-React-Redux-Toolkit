@@ -83,7 +83,6 @@ function AppW4
     const token = document.cookie.replace(
       /(?:(?:^|.*;\s*)jiaToken\s*\=\s*([^;]*).*$)|^.*$/,
       "$1",);
-    // console.log(token);
     
     if (token) {
       axios.defaults.headers.common.Authorization = token;

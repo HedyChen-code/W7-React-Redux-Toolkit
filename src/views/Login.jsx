@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router';
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
@@ -10,6 +11,8 @@ function Login ( { getProducts, setIsAuth } ) {
     username: "lifesunny719@gmail.com",
     password: ""
   });
+
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -30,8 +33,10 @@ function Login ( { getProducts, setIsAuth } ) {
       document.cookie = `jiaToken=${token}; expires=${new Date(expired)};`;
       axios.defaults.headers.common.Authorization = token;
 
-      getProducts();
-      setIsAuth(true);
+      navigate('/admin/products');
+
+      // getProducts();
+      // setIsAuth(true);
 
     } catch (error) {
       alert('登入失敗：' + error?.response?.data?.message);

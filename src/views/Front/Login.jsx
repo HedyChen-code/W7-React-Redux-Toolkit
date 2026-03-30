@@ -8,10 +8,12 @@ const API_PATH = import.meta.env.VITE_API_PATH;
 
 function Login ( { getProducts, setIsAuth } ) {
 
-  // const [ formData, setFormData ] = useState({
-  //   username: "lifesunny719@gmail.com",
-  //   password: ""
-  // });
+  const [ formData, setFormData ] = useState({
+    username: "lifesunny719@gmail.com",
+    password: ""
+  });
+
+  const navigate = useNavigate();
 
   // const handleInputChange = (e) => {
   //   const { name, value } = e.target;
@@ -21,8 +23,6 @@ function Login ( { getProducts, setIsAuth } ) {
   //     [name]: value
   //   }))
   // }
-
-  const navigate = useNavigate();
 
   const {
     register,
@@ -47,7 +47,7 @@ function Login ( { getProducts, setIsAuth } ) {
       document.cookie = `jiaToken=${token}; expires=${new Date(expired)};`;
       axios.defaults.headers.common.Authorization = token;
 
-      navigate('/admin');
+      navigate('/admin/products');
 
       // getProducts();
       // setIsAuth(true);

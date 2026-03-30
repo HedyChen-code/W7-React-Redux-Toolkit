@@ -1,20 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import * as bootstrap from 'bootstrap';
-import "../sass/all.scss";
+import ProductModal from '../../components/ProductModal';
+import Pagination from '../../components/Pagination';
+import useMessage from '../../hooks/useMessage';
 
-import ProductModal from './ProductModal';
-import Pagination from './Pagination';
+
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
 
-function ProductTable ( ) {
+function AdminProducts ( ) {
   const [ products, setProducts ] = useState([]);
   const productModalRef = useRef(null);
   const [ modalType, setModalType ]= useState('');
-  const [ setIsAuth ] = useState(false);
   const [ pagination, setPagination ] = useState({});
+  const { showError } = useMessage();
   
   const INITIAL_TEMPLATE_PRODUCT = {
     id: "",
@@ -49,17 +50,6 @@ function ProductTable ( ) {
   const closeModal = () => {
     productModalRef.current.hide();
   }
-  // 檢查管理員權限
-  const checkAdmin = async () => {
-    try {
-      await axios.post(`${API_BASE}/api/user/check`);
-      setIsAuth(true);
-      getProducts();
-    } catch (error) {
-      alert('權限檢查失敗：', error.response?.data?.message);
-      setIsAuth(false);
-    }
-  }
 
   const getProducts = async (page=1) => {
     try {
@@ -67,26 +57,13 @@ function ProductTable ( ) {
       setProducts(response.data.products);
       setPagination(response.data.pagination);
     } catch (error) {
-      console.error(error?.response?.data?.message);
+      showError(error?.response?.data?.message);
     }
     
   }
 
   // 頁面載入 -> 啟動 useEffect -> 從 cookie 中讀取 token -> 檢查管理員權限
   useEffect(() => {
-    // 檢查登入狀態
-    // const token = document.cookie.replace(
-    //   /(?:(?:^|.*;\s*)jiaToken\s*\=\s*([^;]*).*$)|^.*$/,
-    //   "$1",);
-    const token = document.cookie
-      .split(";")
-      .find((row) => row.startsWith("jiaToken="))
-      ?.split("=")[1];
-    
-    if (token) {
-      axios.defaults.headers.common.Authorization = token;
-    }
-
     // const myModalAlternative = new bootstrap.Modal('#myModal', options)
     productModalRef.current  = new bootstrap.Modal('#productModal');
 
@@ -98,8 +75,19 @@ function ProductTable ( ) {
         }
       });
 
-    // 檢查管理員權限並載入資料
-    checkAdmin();
+    const getProducts = async (page=1) => {
+      try {
+        const response = await axios.get(`${API_BASE}/api/${API_PATH}/admin/products?page=${page}`);
+        setProducts(response.data.products);
+        setPagination(response.data.pagination);
+      } catch (error) {
+        // dispatch(createAsyncMessage(error.response.data));
+        showError(error.response?.data?.message || "產品取得失敗");
+      }
+      
+    }
+
+    getProducts();
 
   }, []);
 
@@ -174,4 +162,4 @@ function ProductTable ( ) {
   </>)
 }
 
-export default ProductTable
+export default AdminProducts

@@ -6,7 +6,10 @@ import NotFound from "../views/Front/NotFound";
 import Products from "../views/Front/Products";
 import SingleProducts from "../views/Front/SingleProduct";
 import Login from "../views/Front/Login";
-import ProductTabel from "../components/ProductTable"
+import AdminLayout from "../layout/AdminLayout ";
+import AdminProducts from "../views/Admin/AdminProducts";
+import AdminOrders from "../views/Admin/AdminOrders";
+import ProtectRoute from "../components/ProtectedRoute";
 
 
 const routes = [
@@ -19,30 +22,43 @@ const routes = [
         element: <Home />
       },
       {
-        path: '/products',
+        path: 'products',
         element: <Products />
       },
       {
-        path: '/product/:id',
+        path: 'product/:id',
         element: <SingleProducts />
       },
       {
-        path: '/cart',
+        path: 'cart',
         element: <Cart />
       },
       {
-        path: '/checkout',
+        path: 'checkout',
         element: <Checkout />
       },
       {
-        path: '/login',
+        path: 'login',
         element: <Login />
       },
     ]
   },
   {
-    path: '/admin',
-    element: <ProductTabel />
+    path: 'admin',
+    element: ( 
+      <ProtectRoute>
+        <AdminLayout />
+      </ProtectRoute>),
+    children: [
+      {
+        path: "products",
+        element: <AdminProducts />
+      },
+      {
+        path: "orders",
+        element: <AdminOrders />
+      }
+    ]
   },
   {
     path: '*',
