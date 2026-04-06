@@ -1,9 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
 import useMessage from '../hooks/useMessage';
-
-const API_BASE = import.meta.env.VITE_API_BASE;
-const API_PATH = import.meta.env.VITE_API_PATH;
+import { addProductApi, delProductApi, updateProductApi } from '../services/product';
+import { uploadImageApi } from '../services/image';
 
 function ProductModal ( { 
   templateProduct, 
@@ -94,7 +92,6 @@ function ProductModal ( {
   };
 
   const uploadImage = async (e) => {
-    const url = `${API_BASE}/api/${API_PATH}/admin/upload`;
     const file = e.target.files?.[0];
     if (!file) {
       return
@@ -104,9 +101,8 @@ function ProductModal ( {
       const formData = new FormData();
       formData.append('file-to-upload', file);
       
-      const response = await axios.post(url, formData);
+      const response = await uploadImageApi(formData);
       const uploadImageUrl = response.data.imageUrl;
-
       setTempProduct((prev) => ({
         ...prev,
         imageUrl:uploadImageUrl
@@ -117,16 +113,6 @@ function ProductModal ( {
   }
 
   const updateProduct = async (id) => {
-    // 新增產品
-    let url = `${API_BASE}/api/${API_PATH}/admin/product`;
-    let method = 'post';
-
-    // 編輯產品
-    if (modalType === 'edit') {
-      url = `${API_BASE}/api/${API_PATH}/admin/product/${id}`;
-      method = 'put';
-    }
-
     const productData = {
       data: {
         ...tempProduct,
@@ -138,8 +124,11 @@ function ProductModal ( {
     }
 
     try {
-      const res = await axios[method](url, productData);
-      // dispatch(createAsyncMessage(res.data));
+      const res = 
+        modalType === 'edit' 
+          ? await updateProductApi(id, productData) 
+          : await addProductApi(productData);
+          
       showSuccess(res.data.message);
       getProducts();
       closeModal();
@@ -150,7 +139,7 @@ function ProductModal ( {
 
   const deleteProduct = async (id) => {
     try {
-      await axios.delete(`${API_BASE}/api/${API_PATH}/admin/product/${id}`);
+      await delProductApi(id);
       getProducts();
       closeModal();
     } catch (error) {

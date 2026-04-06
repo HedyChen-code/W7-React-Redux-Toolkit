@@ -1,74 +1,51 @@
-import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { currency } from "../../utils/filter";
 import useMessage from "../../hooks/useMessage";
-
-const API_BASE = import.meta.env.VITE_API_BASE;
-const API_PATH = import.meta.env.VITE_API_PATH;
+import { createAsyncGetCart, createAsyncDelCart, createAsyncDelCartAll, createAsyncUpdateCart } from "../../slice/cartSlice";
 
 const Cart = () => {
-  const [ cart, setCart ] = useState({ cart: [] });
+  // const [ cart, setCart ] = useState({ cart: [] });
+  const cartState = useSelector((state) => state.cart);
+  const dispatch = useDispatch();
   const { showSuccess, showError } = useMessage();
 
-  const getCart = async () => {
+  const handleUpdateCart = async (cartId, productId, qty) => {
     try {
-      const url = `${API_BASE}/api/${API_PATH}/cart`;
-      const res = await axios.get(url);
-      showSuccess(res.data.data);
-      setCart(res.data.data);
+      await dispatch(createAsyncUpdateCart({ cartId, productId, qty })).unwrap();
+      showSuccess('更新購物車成功');
     } catch (error) {
-      showError('取得購物車資料失敗：', error?.response?.data);
+      showError(error || '更新購物車失敗');
     }
   }
 
-  const updateCart = async (cartId, productId, qty=1) => {
+  const handleRemoveCart = async (e, id) => {
+    e.preventDefault();
+
     try {
-      const url = `${API_BASE}/api/${API_PATH}/cart/${cartId}`;
-      const data = {
-        product_id: productId,
-        qty
-      }
-      await axios.put(url, { data });
-      getCart();
+      await dispatch(createAsyncDelCart(id)).unwrap();
+      showSuccess('刪除該筆購物車成功');
     } catch (error) {
-      showError(error?.response?.data);
+      showError(error || '刪除該筆購物車失敗');
     }
+    
   }
 
-  const deleteCart = async(id) => {
+  const handleRemoveCartAll = async () => {
     try {
-      const url = `${API_BASE}/api/${API_PATH}/cart/${id}`;
-      await axios.delete(url);
-      getCart();
-      showSuccess('刪除這一筆購物車成功！')
+      await dispatch(createAsyncDelCartAll()).unwrap();
+      showSuccess('清空購物車成功！')
     } catch (error) {
-      showError(error?.response?.data);
+      showError(error || '清空購物車失敗');
     }
-  }
-
-  const deleteCartAll = async () => {
-    const url = `${API_BASE}/api/${API_PATH}/cart`;
-    await axios.delete(url);
-    getCart();
-    showSuccess('清空購物車成功！')
   }
 
   useEffect(() => {
-    const getCart = async () => {
-      try {
-        const url = `${API_BASE}/api/${API_PATH}/cart`;
-        const res = await axios.get(url);
-        showSuccess(res.data.data);
-        setCart(res.data.data);
-      } catch (error) {
-        showError('取得購物車資料失敗：', error?.response?.data);
-      }
-    }
-    getCart();
-  }, [getCart])
+    dispatch(createAsyncGetCart());
+  }, [dispatch])
 
   return (<>
-    <div className="container">
+    <div className="container mt-5">
       <h2 className="mb-4">購物車清單</h2>
       <div className="text-end mb-2">
         <button 
@@ -76,7 +53,7 @@ const Cart = () => {
           className="btn btn-outline-danger"
           onMouseEnter={ (e) => e.target.style.color = "#f8f9fa" }
           onMouseLeave={ (e) => e.target.style.color = "" }
-          onClick={ deleteCartAll }
+          onClick={ handleRemoveCartAll }
         >
           清空購物車
         </button>
@@ -91,8 +68,8 @@ const Cart = () => {
           </tr>
         </thead>
         <tbody>
-          { cart.carts && cart.carts.length > 0 ? (
-            cart.carts.map( cartItem => (
+          { cartState.carts && cartState.carts.length > 0 ? (
+            cartState.carts.map( cartItem => (
               <tr key={ cartItem.id}>
                 <td>
                   <button 
@@ -100,7 +77,7 @@ const Cart = () => {
                     className="btn btn-sm btn-outline-danger"
                     onMouseEnter={ (e) => e.target.style.color = "#f8f9fa" }
                     onMouseLeave={ (e) => e.target.style.color = "" }
-                    onClick={ () => deleteCart(cartItem.id) }
+                    onClick={ (e) => handleRemoveCart(e, cartItem.id) }
                   >
                     刪除
                   </button>
@@ -115,7 +92,7 @@ const Cart = () => {
                       aria-label="cart-product-num" 
                       aria-describedby="cart-product-num" 
                       defaultValue={ cartItem.qty }
-                      onChange={ (e) => updateCart(cartItem.id, cartItem.product_id, Number(e.target.value)) }
+                      onChange={ (e) => handleUpdateCart(cartItem.id, cartItem.product_id, Number(e.target.value)) }
                     />
                     <span className="input-group-text" id="cart-product-num">
                       { cartItem.product.unit }
@@ -135,7 +112,7 @@ const Cart = () => {
         <tfoot>
           <tr className="table-dark">
             <td className="text-end" colSpan="3">總計</td>
-            <td className="text-end">{ currency(cart.final_total) }</td>
+            <td className="text-end">{ currency(cartState.final_total) }</td>
           </tr>
         </tfoot>
       </table>

@@ -1,22 +1,21 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router"
+import { useParams } from "react-router"
 import useMessage from "../../hooks/useMessage";
-
-const API_BASE = import.meta.env.VITE_API_BASE;
-const API_PATH = import.meta.env.VITE_API_PATH;
+import { useDispatch } from "react-redux";
+import { createAsyncAddCart } from "../../slice/cartSlice";
+import { getSingleProductApi } from "../../services/product";
 
 const SingleProduct = () => {
   const [ tempProduct, setTempProduct ] = useState({});
   const params = useParams();
   const { id } = params;
   const { showSuccess, showError } = useMessage();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const getSingleProduct = async (id) => {
       try {
-        const url = `${API_BASE}/api/${API_PATH}/product/${id}`;
-        const res = await axios.get(url);
+        const res = await getSingleProductApi(id);
         setTempProduct(res.data.product);
       } catch (error) {
         showError('取得產品資料失敗：', error);
@@ -25,18 +24,19 @@ const SingleProduct = () => {
     getSingleProduct(id);
   }, [id]);
 
-  const addCart = async (id, qty=1) => {
-    const data = {
-      product_id: id,
-      qty
-    };
+  const handleAddCart = async (e, id, qty = 1) => {
+    e.preventDefault();
+
     try {
-      const url = `${API_BASE}/api/${API_PATH}/cart`;
-      await axios.post(url, { data });
+      await dispatch(createAsyncAddCart({
+        id,
+        qty,
+      })).unwrap();
       showSuccess('加入購物車成功！')
     } catch (error) {
-      showError('加入購物車失敗：', error?.response?.data);
+      showError(error || '加入購物車失敗');
     }
+    
   }
 
   return (<>
@@ -100,7 +100,7 @@ const SingleProduct = () => {
                 <button 
                   type="button" 
                   className="btn btn-outline-primary me-2" 
-                  onClick={ () => addCart(id) }
+                  onClick={ (e) => handleAddCart(e, tempProduct.id) }
                 >
                   加入購物車
                 </button>

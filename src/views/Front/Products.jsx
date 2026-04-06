@@ -1,29 +1,78 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import useMessage from "../../hooks/useMessage";
-
-const API_BASE = import.meta.env.VITE_API_BASE;
-const API_PATH = import.meta.env.VITE_API_PATH;
+import Pagination from "../../components/Pagination";
+import { getProductsAllApi, getProductsForCategoriesApi } from "../../services/product.js";
 
 const Products = () => {
   const [ products, setProducts ] = useState([]);
   const { showError } = useMessage();
+  const [ categories, setCategories ] = useState([]);
+  const [ currentCategory, setCurrentCategory ] = useState('全部商品');
+  const [ pagination, setPagination ] = useState({});
+
+  const getProducts = async (page=1, category) => {
+    try {
+      const res = await getProductsForCategoriesApi(page, category)
+      setProducts(res.data.products);
+      setPagination(res.data.pagination);
+    } catch (error) {
+      showError(error?.response?.data?.message || '取得產品資料失敗');
+    }
+  }
 
   useEffect(() => {
-    const getProducts = async () => {
+    const getAllProducts = async () => {
       try {
-        const url = `${API_BASE}/api/${API_PATH}/products`;
-        const res = await axios.get(url);
-        setProducts(res.data.products);
+        const res = await getProductsAllApi();
+        const result = [
+          '全部商品',
+          ... new Set(res.data.products.map( product => product.category))
+        ];
+        setCategories(result);
       } catch (error) {
         showError(error?.response?.data?.message || '取得產品資料失敗');
       }
     }
-    getProducts();
-  }, [])
+    getAllProducts();
+    const getProducts = async (page=1, category) => {
+      try {
+        const res = await getProductsForCategoriesApi(page, category)
+        setProducts(res.data.products);
+        setPagination(res.data.pagination);
+      } catch (error) {
+        showError(error?.response?.data?.message || '取得產品資料失敗');
+      }
+    }
+    getProducts(1, currentCategory);
+  }, [currentCategory])
 
   return (<>
+    <nav className="navbar navbar-expand-lg bg-body-light mb-5">
+      <div className="container">
+        <div className="collapse navbar-collapse border-bottom" id="navbarNav">
+          <ul className="navbar-nav">
+            <li className="nav-item">
+              { categories.map( category => (
+                <button 
+                  key={ category }
+                  type="button"
+                  className={`nav-link
+                    ${currentCategory === category && 'active'}
+                  `}
+                  onClick={ e => {
+                    e.preventDefault();
+                    setCurrentCategory(category);
+                  }}
+                >{ category }
+                </button> 
+              )) 
+              }
+              </li> 
+          </ul>
+        </div>
+      </div>
+    </nav>
     <div className="container">
       <div className="row">
           { products && products.length > 0 ? 
@@ -49,6 +98,7 @@ const Products = () => {
           )))  : (<p>尚無產品資料</p>)}
       </div>
     </div>
+    <Pagination pagination={ pagination } onChangePage={ getProducts }/>
   </>)
 }
 

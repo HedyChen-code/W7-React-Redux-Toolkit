@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import * as bootstrap from 'bootstrap';
 import "../sass/all.scss";
 
 import ProductModal from './ProductModal';
 import Pagination from './Pagination';
+import { authCheckApi } from '../services/auth';
+import { getAdminProductsApi } from '../services/product';
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
@@ -52,7 +53,7 @@ function ProductTable ( ) {
   // 檢查管理員權限
   const checkAdmin = async () => {
     try {
-      await axios.post(`${API_BASE}/api/user/check`);
+      await authCheckApi();
       setIsAuth(true);
       getProducts();
     } catch (error) {
@@ -61,9 +62,9 @@ function ProductTable ( ) {
     }
   }
 
-  const getProducts = async (page=1) => {
+  const getProducts = async (page) => {
     try {
-      const response = await axios.get(`${API_BASE}/api/${API_PATH}/admin/products?page=${page}`)
+      const response = await getAdminProductsApi(page)
       setProducts(response.data.products);
       setPagination(response.data.pagination);
     } catch (error) {
@@ -74,19 +75,6 @@ function ProductTable ( ) {
 
   // 頁面載入 -> 啟動 useEffect -> 從 cookie 中讀取 token -> 檢查管理員權限
   useEffect(() => {
-    // 檢查登入狀態
-    // const token = document.cookie.replace(
-    //   /(?:(?:^|.*;\s*)jiaToken\s*\=\s*([^;]*).*$)|^.*$/,
-    //   "$1",);
-    const token = document.cookie
-      .split(";")
-      .find((row) => row.startsWith("jiaToken="))
-      ?.split("=")[1];
-    
-    if (token) {
-      axios.defaults.headers.common.Authorization = token;
-    }
-
     // const myModalAlternative = new bootstrap.Modal('#myModal', options)
     productModalRef.current  = new bootstrap.Modal('#productModal');
 

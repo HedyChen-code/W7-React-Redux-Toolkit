@@ -1,34 +1,14 @@
-import { useState } from 'react';
-import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
+import { signinApi } from '../../services/auth';
 
-const API_BASE = import.meta.env.VITE_API_BASE;
-const API_PATH = import.meta.env.VITE_API_PATH;
-
-function Login ( { getProducts, setIsAuth } ) {
-
-  const [ formData, setFormData ] = useState({
-    username: "lifesunny719@gmail.com",
-    password: ""
-  });
-
+function Login ( ) {
   const navigate = useNavigate();
-
-  // const handleInputChange = (e) => {
-  //   const { name, value } = e.target;
-  //   // React 自動傳入當前 state 值 setState((當前狀態) => (新狀態))
-  //   setFormData(prevData => ({
-  //     ...prevData,
-  //     [name]: value
-  //   }))
-  // }
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset
   } = useForm({
      mode: "onChange",
      defaultValues: { 
@@ -41,17 +21,14 @@ function Login ( { getProducts, setIsAuth } ) {
     // e.preventDefault();
 
     try {
-      const response = await axios.post(`${API_BASE}/admin/signin`, data);
+      const response = await signinApi(data);
       const { expired, token } = response.data;
       // MDN: document.cookie = "someCookieName=true; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/";
-      document.cookie = `jiaToken=${token}; expires=${new Date(expired)};`;
-      axios.defaults.headers.common.Authorization = token;
+      // document.cookie = `jiaToken=${token}; expires=${new Date(expired)};`;
+      document.cookie = `jiaToken=${token}; expires=${new Date(expired).toUTCString()}; path=/`;
+
 
       navigate('/admin/products');
-
-      // getProducts();
-      // setIsAuth(true);
-
     } catch (error) {
       alert('登入失敗：' + error?.response?.data?.message);
     }

@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { currency } from "../../utils/filter";
 import { useForm } from "react-hook-form";
@@ -7,6 +6,9 @@ import * as bootstrap from "bootstrap";
 import SingleProductModal from "../../components/SingleProductModal";
 import { addressValidation, emailValidation, nameValidation, telValidation } from "../../utils/validation";
 import useMessage from "../../hooks/useMessage";
+import { addOrderApi } from "../../services/order";
+import { getProductsApi, getSingleProductApi } from "../../services/product";
+import { addCartApi, delCartAllApi, delCartApi, getCartApi, updateCartApi } from "../../services/cart";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
@@ -31,14 +33,7 @@ const Checkout = () => {
 
   const onSubmit = async (formData) => {
     try {
-      const url = `${API_BASE}/api/${API_PATH}/order`;
-      const data = {
-        data: {
-          user: formData,
-          message: formData.message
-        }
-      }
-      await axios.post(url, data);
+      await addOrderApi(formData);
       getCart();
       reset();
     } catch (error) {
@@ -50,12 +45,20 @@ const Checkout = () => {
     productModalRef.current.show();
   }
 
+  const getProducts = async () => {
+    try {
+      const res = await getProductsApi();
+      setProducts(res.data.products);
+    } catch (error) {
+      showError('取得產品資料失敗：', error);
+    }
+  }
+
   const getSingleProduct = async (id) => {
     setLoadingProductId(id);
 
     try {
-      const url = `${API_BASE}/api/${API_PATH}/product/${id}`;
-      const res = await axios.get(url);
+      const res = await getSingleProductApi(id);
       setTempProduct(res.data.product);
       openModal()
     } catch (error) {
@@ -71,22 +74,16 @@ const Checkout = () => {
 
   const getCart = async () => {
     try {
-      const url = `${API_BASE}/api/${API_PATH}/cart`;
-      const res = await axios.get(url);
+      const res = await getCartApi();
       setCart(res.data.data);
     } catch (error) {
       showError(error?.response?.data || '取得購物車資料失敗');
     }
   }
 
-  const updateCart = async (cartId, productId, qty=1) => {
+  const updateCart = async (cartId, productId, qty) => {
     try {
-      const url = `${API_BASE}/api/${API_PATH}/cart/${cartId}`;
-      const data = {
-        product_id: productId,
-        qty
-      }
-      await axios.put(url, { data });
+      await updateCartApi(cartId, productId, qty);
       getCart();
     } catch (error) {
       showError(error?.response?.data);
@@ -95,8 +92,7 @@ const Checkout = () => {
 
   const deleteCart = async(id) => {
     try {
-      const url = `${API_BASE}/api/${API_PATH}/cart/${id}`;
-      await axios.delete(url);
+      await delCartApi(id);
       getCart();
       showSuccess('刪除這一筆購物車成功！')
     } catch (error) {
@@ -105,8 +101,7 @@ const Checkout = () => {
   }
 
   const deleteCartAll = async () => {
-    const url = `${API_BASE}/api/${API_PATH}/cart`;
-    await axios.delete(url);
+    await delCartAllApi();
     getCart();
     showSuccess('清空購物車成功！')
   }
@@ -114,8 +109,7 @@ const Checkout = () => {
   useEffect(() => {
     const getProducts = async () => {
       try {
-        const url = `${API_BASE}/api/${API_PATH}/products`;
-        const res = await axios.get(url);
+        const res = await getProductsApi();
         setProducts(res.data.products);
       } catch (error) {
         showError('取得產品資料失敗：', error);
@@ -124,8 +118,7 @@ const Checkout = () => {
 
     const getCart = async () => {
       try {
-        const url = `${API_BASE}/api/${API_PATH}/cart`;
-        const res = await axios.get(url);
+        const res = await getCartApi();
         setCart(res.data.data);
       } catch (error) {
         showError(error?.response?.data || '取得購物車資料失敗');
@@ -147,18 +140,13 @@ const Checkout = () => {
           document.activeElement.blur();
         }
       });
-  }, [getCart]);
+  }, []);
 
-  const addCart = async (id, qty=1) => {
+  const addCart = async (id, qty) => {
     setLoadingCartId(id);
 
-    const data = {
-      product_id: id,
-      qty
-    };
     try {
-      const url = `${API_BASE}/api/${API_PATH}/cart`;
-      await axios.post(url, { data });
+      await addCartApi(id, qty);
       showSuccess('加入購物車成功！')
       getCart();
     } catch (error) {
@@ -169,7 +157,7 @@ const Checkout = () => {
   }
 
   return (<>
-    <div className="container">
+    <div className="container mt-5">
 
       {/* 產品列表 */}
       <table className="table align-middle">
@@ -252,7 +240,7 @@ const Checkout = () => {
           onMouseEnter={ (e) => e.target.style.color = "#f8f9fa" }
           onMouseLeave={ (e) => e.target.style.color = "" }
           onClick={ deleteCartAll }
-          disabled={ !(cart.carts.length > 0)}          
+          disabled={ !(cart.carts?.length > 0)}          
         >
           清空購物車
         </button>
@@ -268,7 +256,7 @@ const Checkout = () => {
           </tr>
         </thead>
         <tbody>
-          { cart.carts && cart.carts.length > 0 ? (
+          { cart.carts && cart.carts?.length > 0 ? (
             cart.carts.map( cartItem => (
               <tr key={ cartItem.id}>
                 <td>
